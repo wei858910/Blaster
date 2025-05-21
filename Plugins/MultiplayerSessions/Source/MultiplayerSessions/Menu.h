@@ -13,7 +13,26 @@ UCLASS()
 class MULTIPLAYERSESSIONS_API UMenu : public UUserWidget
 {
 	GENERATED_BODY()
+
 public:
 	UFUNCTION(BlueprintCallable)
 	void UMenuSetup();
+
+protected:
+	virtual bool Initialize();
+
+private:
+	UPROPERTY(meta = (BindWidget))
+	class UButton* HostButton;
+
+	UPROPERTY(meta = (BindWidget))
+	class UButton* JoinButton;
+
+	UFUNCTION()
+	void HostButtonClicked();
+
+	UFUNCTION()
+	void JoinButtonClicked();
+
+	class UMultiplayerSessionSubsystem* MultiplayerSessionSubsystem;
 };

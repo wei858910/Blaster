@@ -3,6 +3,9 @@
 
 #include "Menu.h"
 
+#include "MultiplayerSessionSubsystem.h"
+#include "Components/Button.h"
+
 void UMenu::UMenuSetup()
 {
 	AddToViewport();
@@ -31,5 +34,56 @@ void UMenu::UMenuSetup()
 			// 显示鼠标光标可以方便玩家与菜单 UI 进行交互操作。
 			PlayerController->SetShowMouseCursor(true);
 		}
+	}
+
+	UGameInstance* GameInstance = GetGameInstance();
+	if (GameInstance)
+	{
+		MultiplayerSessionSubsystem = GameInstance->GetSubsystem<UMultiplayerSessionSubsystem>();
+	}
+}
+
+bool UMenu::Initialize()
+{
+	// 调用父类的 Initialize 函数，确保父类的初始化逻辑正常执行
+	// 如果父类的初始化失败，那么当前类的初始化也会失败
+	if (!Super::Initialize())
+	{
+		// 父类初始化失败，返回 false 表示当前类初始化失败
+		return false;
+	}
+	// 绑定按钮点击事件
+	if (HostButton)
+	{
+		HostButton->OnClicked.AddDynamic(this, &UMenu::HostButtonClicked);
+	}
+
+	if (JoinButton)
+	{
+		JoinButton->OnClicked.AddDynamic(this, &UMenu::JoinButtonClicked);
+	}
+
+	// 父类初始化成功，返回 true 表示当前类初始化成功
+	return true;
+}
+
+void UMenu::HostButtonClicked()
+{
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Host button clicked!"));
+	}
+
+	if (IsValid(MultiplayerSessionSubsystem))
+	{
+		MultiplayerSessionSubsystem->CreateSession(4, FString("FreeForAll"));
+	}
+}
+
+void UMenu::JoinButtonClicked()
+{
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Join button clicked!"));
 	}
 }
