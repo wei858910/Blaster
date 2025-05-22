@@ -34,6 +34,9 @@ class ABlasterCharacter : ACharacter
     UInputAction JumpAction;
     default JumpAction = Cast<UInputAction>(LoadObject(nullptr, "/Game/Input/IA_Jump.IA_Jump"));
 
+    UPROPERTY()
+    float MoveSpeed = 100.0;
+
     UFUNCTION(BlueprintOverride)
     void BeginPlay()
     {
@@ -57,14 +60,40 @@ class ABlasterCharacter : ACharacter
     private void OnMove(FInputActionValue ActionValue, float32 ElapsedTime, float32 TriggeredTime, const UInputAction SourceAction)
     {
         FVector2D MovementVector = ActionValue.GetAxis2D();
-        Print(f"Movement vector: {MovementVector}");
+        float     X = MovementVector.X;
+        float     Y = MovementVector.Y;
+
+        const FRotator YawRotation(0.0, Controller.GetControlRotation().Yaw, 0.0);
+
+        float DeltaTime = Gameplay::GetWorldDeltaSeconds();
+
+        if (X != 0.0)
+        {
+            AddMovementInput(YawRotation.RightVector, MoveSpeed * X * DeltaTime);
+        }
+
+        if (Y != 0.0)
+        {
+            AddMovementInput(YawRotation.ForwardVector, MoveSpeed * Y * DeltaTime);
+        }
     }
 
     UFUNCTION()
     private void OnLook(FInputActionValue ActionValue, float32 ElapsedTime, float32 TriggeredTime, const UInputAction SourceAction)
     {
         FVector2D LookVector = ActionValue.GetAxis2D();
-        Print(f"Look vector: {LookVector}");
+        float     X = LookVector.X;
+        float     Y = LookVector.Y;
+
+        if (X != 0.0)
+        {
+            AddControllerYawInput(X);
+        }
+
+        if (Y != 0.0)
+        {
+            AddControllerPitchInput(-Y);
+        }
     }
 
     UFUNCTION()
