@@ -15,8 +15,61 @@ class ABlasterCharacter : ACharacter
     UCameraComponent FollowCamera;
     default FollowCamera.bUsePawnControlRotation = false;
 
+    UPROPERTY(DefaultComponent, Category = "Input")
+    UEnhancedInputComponent InputComponent;
+
+    UPROPERTY(Category = "Input")
+    UInputMappingContext InputMappingContext;
+    default InputMappingContext = Cast<UInputMappingContext>(LoadObject(nullptr, "/Game/Input/IMC_Blaster.IMC_Blaster"));
+
+    UPROPERTY(Category = "Input")
+    UInputAction MoveAction;
+    default MoveAction = Cast<UInputAction>(LoadObject(nullptr, "/Game/Input/IA_Move.IA_Move"));
+
+    UPROPERTY(Category = "Input")
+    UInputAction LookAction;
+    default LookAction = Cast<UInputAction>(LoadObject(nullptr, "/Game/Input/IA_Look.IA_Look"));
+
+    UPROPERTY(Category = "Input")
+    UInputAction JumpAction;
+    default JumpAction = Cast<UInputAction>(LoadObject(nullptr, "/Game/Input/IA_Jump.IA_Jump"));
+
     UFUNCTION(BlueprintOverride)
     void BeginPlay()
     {
+        APlayerController PlayerController = Cast<APlayerController>(GetController());
+        if (IsValid(PlayerController))
+        {
+            InputComponent = UEnhancedInputComponent::Create(PlayerController);
+            PlayerController.PushInputComponent(InputComponent);
+            UEnhancedInputLocalPlayerSubsystem EnhancedInputSubsystem = UEnhancedInputLocalPlayerSubsystem::Get(PlayerController);
+            if (IsValid(EnhancedInputSubsystem))
+            {
+                EnhancedInputSubsystem.AddMappingContext(InputMappingContext, 0, FModifyContextOptions());
+                InputComponent.BindAction(MoveAction, ETriggerEvent::Triggered, FEnhancedInputActionHandlerDynamicSignature(this, n"OnMove"));
+                InputComponent.BindAction(LookAction, ETriggerEvent::Triggered, FEnhancedInputActionHandlerDynamicSignature(this, n"OnLook"));
+                InputComponent.BindAction(JumpAction, ETriggerEvent::Started, FEnhancedInputActionHandlerDynamicSignature(this, n"OnJump"));
+            }
+        }
+    }
+
+    UFUNCTION()
+    private void OnMove(FInputActionValue ActionValue, float32 ElapsedTime, float32 TriggeredTime, const UInputAction SourceAction)
+    {
+        FVector2D MovementVector = ActionValue.GetAxis2D();
+        Print(f"Movement vector: {MovementVector}");
+    }
+
+    UFUNCTION()
+    private void OnLook(FInputActionValue ActionValue, float32 ElapsedTime, float32 TriggeredTime, const UInputAction SourceAction)
+    {
+        FVector2D LookVector = ActionValue.GetAxis2D();
+        Print(f"Look vector: {LookVector}");
+    }
+
+    UFUNCTION()
+    private void OnJump(FInputActionValue ActionValue, float32 ElapsedTime, float32 TriggeredTime, const UInputAction SourceAction)
+    {
+        Jump();
     }
 };
