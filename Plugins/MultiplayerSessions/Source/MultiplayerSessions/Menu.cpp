@@ -64,6 +64,19 @@ bool UMenu::Initialize()
 	return true;
 }
 
+/**
+ * @brief 当菜单对象被销毁时调用的方法。
+ * 
+ * 此方法在菜单对象生命周期结束、即将被销毁时触发。
+ * 首先调用 `MenuTearDown` 方法移除菜单界面并恢复游戏输入模式，
+ * 然后调用父类的 `NativeDestruct` 方法完成父类的销毁逻辑。
+ */
+void UMenu::NativeDestruct()
+{
+	MenuTearDown();
+	Super::NativeDestruct();
+}
+
 void UMenu::HostButtonClicked()
 {
 	if (GEngine)
@@ -117,4 +130,3 @@ void UMenu::MenuTearDown()
 		}
 	}
 }
-
