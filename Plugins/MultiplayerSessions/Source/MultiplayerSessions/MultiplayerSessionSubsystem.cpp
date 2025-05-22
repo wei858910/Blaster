@@ -71,6 +71,10 @@ void UMultiplayerSessionSubsystem::CreateSession(const int32 NumPublicConnection
 	// 设置会话的唯一构建 ID 为 1。该 ID 用于标识游戏的特定构建版本，
 	// 在线子系统会根据此 ID 确保加入会话的玩家使用相同的游戏构建版本，避免兼容性问题。
 	LastSessionSettings->BuildUniqueId = 1;
+	// 若当前在线子系统支持游戏大厅功能，则使用游戏大厅来管理会话。
+	// 游戏大厅能提供更丰富的交互功能，如玩家列表管理、聊天功能等，
+	// 设置为 true 可让游戏在支持的情况下优先使用大厅机制。
+	LastSessionSettings->bUseLobbiesIfAvailable = true;
 	// 获取世界中的第一个本地玩家，后续创建会话需要使用该玩家的唯一网络 ID
 	if (const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController())
 	{
