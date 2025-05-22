@@ -3,6 +3,7 @@
 
 #include "MultiplayerSessionSubsystem.h"
 
+#include "OnlineSessionSettings.h"
 #include "OnlineSubsystem.h"
 
 UMultiplayerSessionSubsystem::UMultiplayerSessionSubsystem():
@@ -23,8 +24,57 @@ UMultiplayerSessionSubsystem::UMultiplayerSessionSubsystem():
 	}
 }
 
-void UMultiplayerSessionSubsystem::CreateSession(int32 NumPublicConnections, FString MatchType)
+/**
+ * @brief 创建一个新的游戏会话。
+ * 
+ * 若存在同名会话，会先销毁该会话，再创建新会话。设置会话的相关参数，
+ * 并尝试发起会话创建请求。
+ * 
+ * @param NumPublicConnections 会话允许的最大公共连接数。
+ * @param MatchType 会话的匹配类型，用于区分不同类型的游戏模式。
+ */
+bool UMultiplayerSessionSubsystem::CreateSession(int32 NumPublicConnections, const FString& MatchType)
 {
+	// 检查会话接口是否有效，若无效则直接返回，避免后续操作出错
+	if (!SessionInterface.IsValid()) return false;
+
+	// 检查是否已经存在名为 NAME_GameSession 的会话
+	const auto ExistingSession = SessionInterface->GetNamedSession(NAME_GameSession);
+	if (ExistingSession != nullptr)
+	{
+		// 如果存在同名会话，先销毁该会话，确保能创建新的会话
+		SessionInterface->DestroySession(NAME_GameSession);
+	}
+
+	// 绑定会话创建完成时的委托，当会话创建操作完成后会调用 OnCreateSessionComplete 函数
+	CreateSessionCompleteDelegateHandle = SessionInterface->AddOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegate);
+	
+	// 创建新的会话设置对象，用于配置新会话的各项参数
+	LastSessionSettings = MakeShareable(new FOnlineSessionSettings());
+	// 根据在线子系统名称判断是否为局域网匹配，若子系统名为 "NULL" 则为局域网匹配
+	LastSessionSettings->bIsLANMatch = IOnlineSubsystem::Get()->GetSubsystemName() == "NULL" ? true : false;
+	// 设置会话允许的最大公共连接数
+	LastSessionSettings->NumPublicConnections = NumPublicConnections;
+	// 允许玩家在游戏进行中加入会话
+	LastSessionSettings->bAllowJoinInProgress = true;
+	// 允许玩家通过在线状态加入会话
+	LastSessionSettings->bAllowJoinViaPresence = true;
+	// 允许将会话信息进行广告宣传，让其他玩家可以发现该会话
+	LastSessionSettings->bShouldAdvertise = true;
+	// 启用在线状态功能，方便其他玩家通过在线状态了解会话信息
+	LastSessionSettings->bUsesPresence = true;
+	// 设置会话的匹配类型，并通过在线服务和网络延迟信息进行广告宣传
+	LastSessionSettings->Set(FName("MatchType"), MatchType, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+	// 获取世界中的第一个本地玩家，后续创建会话需要使用该玩家的唯一网络 ID
+	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+	// 尝试使用本地玩家的唯一网络 ID、会话名称和会话设置创建新会话
+	if (!SessionInterface->CreateSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *LastSessionSettings))
+	{
+		// 如果会话创建失败，清除之前绑定的会话创建完成委托
+		SessionInterface->ClearOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegateHandle);
+		return false;
+	}
+	return true;
 }
 
 void UMultiplayerSessionSubsystem::FindSessions(int32 MaxSearchResults)

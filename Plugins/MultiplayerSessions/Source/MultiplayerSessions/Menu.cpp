@@ -76,7 +76,14 @@ void UMenu::HostButtonClicked()
 
 	if (IsValid(MultiplayerSessionSubsystem))
 	{
-		MultiplayerSessionSubsystem->CreateSession(4, FString("FreeForAll"));
+		if (MultiplayerSessionSubsystem->CreateSession(4, FString("FreeForAll")))
+		{
+			UWorld* World = GetWorld();
+			if (World)
+			{
+				World->ServerTravel("/Game/Maps/Lobby?listen");
+			}
+		}
 	}
 }
 
