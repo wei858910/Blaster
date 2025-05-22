@@ -7,8 +7,9 @@
 #include "OnlineSessionSettings.h"
 #include "Components/Button.h"
 
-void UMenu::UMenuSetup(const int32 NumOfPublicConnections, const FString& MatchOfType)
+void UMenu::MenuSetup(const int32 NumOfPublicConnections, const FString& MatchOfType, const FString& LobbyPath)
 {
+	PathToLobby = FString::Printf(TEXT("%s?listen"), *LobbyPath);
 	NumPublicConnections = NumOfPublicConnections;
 	MatchType = MatchOfType;
 	AddToViewport();
@@ -92,15 +93,18 @@ void UMenu::OnCreateSession(bool bWasSuccessful)
 {
 	if (bWasSuccessful)
 	{
-		if (GEngine)
+		if (UWorld* World = GetWorld())
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Create session success!"));
+			World->ServerTravel(PathToLobby);
 		}
 	}
-
-	if (UWorld* World = GetWorld())
+	else
 	{
-		World->ServerTravel("/Game/Maps/Lobby?listen");
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Red, FString(TEXT("Failed to create session!")));
+		}
+		HostButton->SetIsEnabled(true);
 	}
 }
 
@@ -133,6 +137,11 @@ void UMenu::OnFindSessions(const TArray<FOnlineSessionSearchResult>& SessionResu
 			// 找到匹配的会话并尝试加入后，退出函数
 			return;
 		}
+	}
+
+	if (!bWasSuccessful || SessionResults.Num() == 0)
+	{
+		JoinButton->SetIsEnabled(true);
 	}
 }
 
@@ -167,6 +176,10 @@ void UMenu::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
 			}
 		}
 	}
+	if (Result != EOnJoinSessionCompleteResult::Success)
+	{
+		JoinButton->SetIsEnabled(true);
+	}
 }
 
 
@@ -180,6 +193,7 @@ void UMenu::OnStartSession(bool bWasSuccessful)
 
 void UMenu::HostButtonClicked()
 {
+	HostButton->SetIsEnabled(false);
 	if (IsValid(MultiplayerSessionSubsystem))
 	{
 		MultiplayerSessionSubsystem->CreateSession(NumPublicConnections, MatchType);
@@ -188,6 +202,7 @@ void UMenu::HostButtonClicked()
 
 void UMenu::JoinButtonClicked()
 {
+	JoinButton->SetIsEnabled(false);
 	if (IsValid(MultiplayerSessionSubsystem))
 	{
 		MultiplayerSessionSubsystem->FindSessions(10000);

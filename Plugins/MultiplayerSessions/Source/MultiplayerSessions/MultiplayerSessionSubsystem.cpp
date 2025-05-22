@@ -41,8 +41,12 @@ void UMultiplayerSessionSubsystem::CreateSession(const int32 NumPublicConnection
 	// 检查是否已经存在名为 NAME_GameSession 的会话
 	if (SessionInterface->GetNamedSession(NAME_GameSession))
 	{
-		// 如果存在同名会话，先销毁该会话，确保能创建新的会话
-		SessionInterface->DestroySession(NAME_GameSession);
+		bCreateSessionOnDestroy = true;
+		LastNumPublicConnections = NumPublicConnections;
+		LastMatchType = MatchType;
+		
+		DestroySession();
+		return;
 	}
 
 	// 绑定会话创建完成时的委托，当会话创建操作完成后会调用 OnCreateSessionComplete 函数
@@ -162,9 +166,38 @@ void UMultiplayerSessionSubsystem::JoinSession(const FOnlineSessionSearchResult&
 }
 
 
+/**
+ * @brief 尝试销毁名为 NAME_GameSession 的多人游戏会话。
+ * 
+ * 此函数首先检查会话接口是否有效，若无效则直接广播会话销毁失败的事件。
+ * 若会话接口有效，则绑定销毁会话完成的委托，然后尝试销毁指定名称的会话。
+ * 根据操作结果，会广播自定义的销毁会话完成事件。
+ */
 void UMultiplayerSessionSubsystem::DestroySession()
 {
+	// 检查会话接口是否有效，若无效则广播会话销毁失败的事件并返回
+	if (!SessionInterface.IsValid())
+	{
+		// 广播自定义的销毁会话完成事件，传递销毁失败标志
+		MultiplayerOnDestroySessionComplete.Broadcast(false);
+		return;
+	}
+	// 绑定销毁会话完成时的委托，当销毁会话操作完成后会调用 OnDestroySessionComplete 函数
+	DestroySessionCompleteDelegateHandle = SessionInterface->AddOnDestroySessionCompleteDelegate_Handle(DestroySessionCompleteDelegate);
+	// 获取世界中的第一个本地玩家
+	if (const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController())
+	{
+		// 尝试销毁名为 NAME_GameSession 的会话
+		if (!SessionInterface->DestroySession(NAME_GameSession))
+		{
+			// 如果销毁会话失败，清除之前绑定的销毁会话完成委托
+			SessionInterface->ClearOnDestroySessionCompleteDelegate_Handle(DestroySessionCompleteDelegateHandle);
+			// 广播自定义的销毁会话完成事件，传递销毁失败标志
+			MultiplayerOnDestroySessionComplete.Broadcast(false);
+		}
+	}
 }
+
 
 void UMultiplayerSessionSubsystem::StartSession()
 {
@@ -236,9 +269,37 @@ void UMultiplayerSessionSubsystem::OnJoinSessionComplete(FName SessionName, EOnJ
 }
 
 
+/**
+ * @brief 处理会话销毁完成的回调函数。
+ * 
+ * 当会话销毁操作完成时，该函数会被调用。它会清除销毁会话完成的委托句柄，
+ * 根据销毁操作的结果和 `bCreateSessionOnDestroy` 标志，决定是否创建新的会话，
+ * 最后广播自定义的会话销毁完成事件。
+ * 
+ * @param SessionName 被销毁的会话名称。
+ * @param bWasSuccessful 指示会话销毁操作是否成功。`true` 表示销毁成功，`false` 表示销毁失败。
+ */
 void UMultiplayerSessionSubsystem::OnDestroySessionComplete(FName SessionName, bool bWasSuccessful)
 {
+	// 检查会话接口是否有效，若有效则清除之前添加的销毁会话完成委托句柄
+	// 避免该委托在后续的销毁会话操作中被重复调用
+	if (SessionInterface)
+	{
+		SessionInterface->ClearOnDestroySessionCompleteDelegate_Handle(DestroySessionCompleteDelegateHandle);
+	}
+	// 检查会话是否销毁成功，并且 bCreateSessionOnDestroy 标志为 true
+	// 若满足条件，则在销毁会话后创建一个新的会话
+	if (bWasSuccessful && bCreateSessionOnDestroy)
+	{
+		// 重置 bCreateSessionOnDestroy 标志，避免重复创建会话
+		bCreateSessionOnDestroy = false;
+		// 使用上次创建会话时的公共连接数和匹配类型创建新的会话
+		CreateSession(LastNumPublicConnections, LastMatchType);
+	}
+	// 广播自定义的会话销毁完成事件，将会话销毁操作的结果传递给所有绑定的函数
+	MultiplayerOnDestroySessionComplete.Broadcast(bWasSuccessful);
 }
+
 
 void UMultiplayerSessionSubsystem::OnStartSessionComplete(FName SessionName, bool bWasSuccessful)
 {
