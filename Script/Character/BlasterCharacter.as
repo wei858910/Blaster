@@ -3,6 +3,8 @@ class ABlasterCharacter : ACharacter
     default Mesh.SetSkeletalMeshAsset(Cast<USkeletalMesh>(LoadObject(nullptr, "/Game/Assets/LearningKit_Games/Assets/Characters/Character/Mesh/SK_EpicCharacter.SK_EpicCharacter")));
     default Mesh.SetRelativeLocation(FVector(0.0, 0.0, -88.0));
     default Mesh.SetRelativeRotation(FRotator(0.0, -90.0, 0.0));
+    default Mesh.SetAnimationMode(EAnimationMode::AnimationBlueprint);
+    default Mesh.SetAnimInstanceClass(Cast<UClass>(LoadObject(nullptr, "/Game/Blueprints/Character/Animation/BP_BlasterAnim.BP_BlasterAnim_C")));
 
     UPROPERTY(DefaultComponent, Category = "Camera")
     USpringArmComponent CameraBoom;
@@ -40,6 +42,7 @@ class ABlasterCharacter : ACharacter
     UFUNCTION(BlueprintOverride)
     void BeginPlay()
     {
+
         APlayerController PlayerController = Cast<APlayerController>(GetController());
         if (IsValid(PlayerController))
         {
