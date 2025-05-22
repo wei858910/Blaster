@@ -94,3 +94,31 @@ void UMenu::JoinButtonClicked()
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Join button clicked!"));
 	}
 }
+
+/**
+ * @brief 移除菜单界面，恢复游戏输入模式。
+ * 
+ * 该函数将菜单从其父级组件中移除，并将玩家的输入模式从 UI 模式切换回游戏模式，
+ * 同时隐藏鼠标光标，让玩家可以正常进行游戏操作。
+ */
+void UMenu::MenuTearDown()
+{
+	// 将菜单从其父级组件中移除，使其不再显示在视口上
+	RemoveFromParent();
+	// 获取当前所在的世界对象
+	if (const UWorld* World = GetWorld())
+	{
+		// 获取当前世界中的第一个玩家控制器
+		if (APlayerController* PlayerController = World->GetFirstPlayerController())
+		{
+			// 创建一个仅用于游戏输入的输入模式对象
+			// 该模式下，输入主要用于控制游戏角色和操作
+			const FInputModeGameOnly InputModeData;
+			// 使得玩家输入切换到仅与游戏交互的模式
+			PlayerController->SetInputMode(InputModeData);
+			// 隐藏鼠标光标，避免影响游戏操作
+			PlayerController->SetShowMouseCursor(false);
+		}
+	}
+}
+
