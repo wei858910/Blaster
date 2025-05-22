@@ -40,6 +40,10 @@ void UMenu::UMenuSetup(const int32 NumOfPublicConnections, const FString& MatchO
 	{
 		MultiplayerSessionSubsystem = GameInstance->GetSubsystem<UMultiplayerSessionSubsystem>();
 	}
+	if (MultiplayerSessionSubsystem)
+	{
+		MultiplayerSessionSubsystem->MultiplayerOnCreateSessionComplete.AddDynamic(this, &UMenu::OnCreateSession);
+	}
 }
 
 bool UMenu::Initialize()
@@ -79,6 +83,22 @@ void UMenu::NativeDestruct()
 	Super::NativeDestruct();
 }
 
+void UMenu::OnCreateSession(bool bWasSuccessful)
+{
+	if (bWasSuccessful)
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Create session success!"));
+		}
+	}
+
+	if (UWorld* World = GetWorld())
+	{
+		World->ServerTravel("/Game/Maps/Lobby?listen");
+	}
+}
+
 void UMenu::HostButtonClicked()
 {
 	if (GEngine)
@@ -88,13 +108,7 @@ void UMenu::HostButtonClicked()
 
 	if (IsValid(MultiplayerSessionSubsystem))
 	{
-		if (MultiplayerSessionSubsystem->CreateSession(NumPublicConnections, MatchType))
-		{
-			if (UWorld* World = GetWorld())
-			{
-				World->ServerTravel("/Game/Maps/Lobby?listen");
-			}
-		}
+		MultiplayerSessionSubsystem->CreateSession(NumPublicConnections, MatchType);
 	}
 }
 

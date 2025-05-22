@@ -32,10 +32,10 @@ UMultiplayerSessionSubsystem::UMultiplayerSessionSubsystem():
  * @param NumPublicConnections 会话允许的最大公共连接数。
  * @param MatchType 会话的匹配类型，用于区分不同类型的游戏模式。
  */
-bool UMultiplayerSessionSubsystem::CreateSession(const int32 NumPublicConnections, const FString& MatchType)
+void UMultiplayerSessionSubsystem::CreateSession(const int32 NumPublicConnections, const FString& MatchType)
 {
 	// 检查会话接口是否有效，若无效则直接返回，避免后续操作出错
-	if (!SessionInterface.IsValid()) return false;
+	if (!SessionInterface.IsValid()) return;
 
 	// 检查是否已经存在名为 NAME_GameSession 的会话
 	if (SessionInterface->GetNamedSession(NAME_GameSession))
@@ -71,11 +71,9 @@ bool UMultiplayerSessionSubsystem::CreateSession(const int32 NumPublicConnection
 		{
 			// 如果会话创建失败，清除之前绑定的会话创建完成委托
 			SessionInterface->ClearOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegateHandle);
-			return false;
+			MultiplayerOnCreateSessionComplete.Broadcast(false);
 		}
 	}
-
-	return true;
 }
 
 void UMultiplayerSessionSubsystem::FindSessions(int32 MaxSearchResults)
@@ -96,6 +94,16 @@ void UMultiplayerSessionSubsystem::StartSession()
 
 void UMultiplayerSessionSubsystem::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
 {
+	// 检查会话接口是否有效。会话接口负责处理游戏会话的创建、查找、加入等操作。
+	if (SessionInterface)
+	{
+		// 若会话接口有效，清除之前添加的会话创建完成委托句柄。
+		// 这一步是为了避免在后续会话创建操作中重复触发委托，确保委托只在当前操作中生效。
+		SessionInterface->ClearOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegateHandle);
+	}
+	// 广播多人会话创建完成的事件，将会话创建操作的结果（成功或失败）传递给所有绑定的函数。
+	// 其他模块可以通过绑定到 MultiplayerOnCreateSessionComplete 委托来监听会话创建完成事件。
+	MultiplayerOnCreateSessionComplete.Broadcast(bWasSuccessful);
 }
 
 void UMultiplayerSessionSubsystem::OnFindSessionsComplete(bool bWasSuccessful)

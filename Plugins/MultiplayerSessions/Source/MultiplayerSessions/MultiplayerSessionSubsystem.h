@@ -7,6 +7,8 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "MultiplayerSessionSubsystem.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMultiplayerOnCreateSessionComplete, bool, bWasSuccessful);
+
 /**
  * 
  */
@@ -18,11 +20,13 @@ class MULTIPLAYERSESSIONS_API UMultiplayerSessionSubsystem : public UGameInstanc
 public:
 	UMultiplayerSessionSubsystem();
 
-	bool CreateSession(int32 NumPublicConnections, const FString& MatchType);
+	void CreateSession(int32 NumPublicConnections, const FString& MatchType);
 	void FindSessions(int32 MaxSearchResults);
 	void JoinSession(const FOnlineSessionSearchResult& SessionResult);
 	void DestroySession();
 	void StartSession();
+
+	FMultiplayerOnCreateSessionComplete MultiplayerOnCreateSessionComplete;
 
 protected:
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
