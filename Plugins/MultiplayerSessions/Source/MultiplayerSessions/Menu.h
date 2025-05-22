@@ -19,7 +19,7 @@ public:
 	void UMenuSetup();
 
 protected:
-	virtual bool Initialize();
+	virtual bool Initialize() override;
 
 private:
 	UPROPERTY(meta = (BindWidget))
@@ -36,5 +36,6 @@ private:
 
 	void MenuTearDown();
 
+	UPROPERTY()
 	class UMultiplayerSessionSubsystem* MultiplayerSessionSubsystem;
 };

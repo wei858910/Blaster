@@ -12,13 +12,11 @@ void UMenu::UMenuSetup()
 	SetVisibility(ESlateVisibility::Visible);
 	SetIsFocusable(true);
 
-	UWorld* World = GetWorld();
-	if (World)
+	if (const UWorld* World = GetWorld())
 	{
 		// 获取当前世界中的第一个玩家控制器
 		// 玩家控制器负责处理玩家输入并控制玩家角色
-		APlayerController* PlayerController = World->GetFirstPlayerController();
-		if (PlayerController)
+		if (APlayerController* PlayerController = World->GetFirstPlayerController())
 		{
 			// 创建一个仅用于 UI 输入的输入模式对象
 			// 该模式下，输入主要用于与 UI 元素交互
@@ -36,8 +34,7 @@ void UMenu::UMenuSetup()
 		}
 	}
 
-	UGameInstance* GameInstance = GetGameInstance();
-	if (GameInstance)
+	if (const UGameInstance* GameInstance = GetGameInstance())
 	{
 		MultiplayerSessionSubsystem = GameInstance->GetSubsystem<UMultiplayerSessionSubsystem>();
 	}
@@ -78,8 +75,7 @@ void UMenu::HostButtonClicked()
 	{
 		if (MultiplayerSessionSubsystem->CreateSession(4, FString("FreeForAll")))
 		{
-			UWorld* World = GetWorld();
-			if (World)
+			if (UWorld* World = GetWorld())
 			{
 				World->ServerTravel("/Game/Maps/Lobby?listen");
 			}
