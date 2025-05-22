@@ -64,6 +64,9 @@ void UMultiplayerSessionSubsystem::CreateSession(const int32 NumPublicConnection
 	LastSessionSettings->bUsesPresence = true;
 	// 设置会话的匹配类型，并通过在线服务和网络延迟信息进行广告宣传
 	LastSessionSettings->Set(FName("MatchType"), MatchType, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+	// 设置会话的唯一构建 ID 为 1。该 ID 用于标识游戏的特定构建版本，
+	// 在线子系统会根据此 ID 确保加入会话的玩家使用相同的游戏构建版本，避免兼容性问题。
+	LastSessionSettings->BuildUniqueId = 1;
 	// 获取世界中的第一个本地玩家，后续创建会话需要使用该玩家的唯一网络 ID
 	if (const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController())
 	{
