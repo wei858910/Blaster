@@ -4,6 +4,7 @@
 #include "Menu.h"
 
 #include "MultiplayerSessionSubsystem.h"
+#include "OnlineSessionSettings.h"
 #include "Components/Button.h"
 
 void UMenu::UMenuSetup(const int32 NumOfPublicConnections, const FString& MatchOfType)
@@ -103,13 +104,71 @@ void UMenu::OnCreateSession(bool bWasSuccessful)
 	}
 }
 
+/**
+ * @brief 处理会话查找结果，尝试加入匹配类型相符的会话。
+ * 
+ * 此函数在会话查找完成后被调用，遍历所有查找到的会话结果，
+ * 检查每个会话的匹配类型是否与预设的匹配类型一致，若一致则尝试加入该会话。
+ * 
+ * @param SessionResults 包含所有查找到的会话信息的数组。
+ * @param bWasSuccessful 指示会话查找操作是否成功。`true` 表示成功，`false` 表示失败。
+ */
 void UMenu::OnFindSessions(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bWasSuccessful)
 {
+	// 检查多人游戏会话子系统是否有效，若无效则直接返回，避免后续操作出错
+	if (MultiplayerSessionSubsystem == nullptr) return;
+
+	// 遍历所有查找到的会话结果
+	for (auto Result : SessionResults)
+	{
+		// 用于存储从会话设置中获取的匹配类型值
+		FString SettingsValue;
+		// 从会话设置中获取名为 "MatchType" 的值
+		Result.Session.SessionSettings.Get(FName("MatchType"), SettingsValue);
+		// 检查获取到的匹配类型是否与预设的匹配类型一致
+		if (SettingsValue == MatchType)
+		{
+			// 若匹配类型一致，则调用多人游戏会话子系统的 JoinSession 函数尝试加入该会话
+			MultiplayerSessionSubsystem->JoinSession(Result);
+			// 找到匹配的会话并尝试加入后，退出函数
+			return;
+		}
+	}
 }
 
+/**
+ * @brief 处理加入会话完成后的操作。
+ * 
+ * 此函数在加入会话操作完成后被调用，根据会话接口获取解析后的连接字符串，
+ * 并使用该字符串让本地玩家控制器连接到目标会话。
+ * 
+ * @param Result 加入会话操作的结果枚举类型，指示加入操作是否成功以及具体的状态。
+ */
 void UMenu::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
 {
+	// 获取当前的在线子系统实例
+	if (const IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get())
+	{
+		// 从在线子系统中获取会话接口
+		const IOnlineSessionPtr SessionInterface = Subsystem->GetSessionInterface();
+		// 检查会话接口是否有效
+		if (SessionInterface.IsValid())
+		{
+			// 用于存储解析后的连接字符串
+			FString Address;
+			// 从会话接口中获取名为 "GameSession" 的会话的解析连接字符串
+			SessionInterface->GetResolvedConnectString(NAME_GameSession, Address);
+			// 获取游戏实例中的第一个本地玩家控制器
+			if (APlayerController* PlayerController = GetGameInstance()->GetFirstLocalPlayerController())
+			{
+				// 使用获取到的连接字符串让玩家控制器连接到目标会话
+				// ETravelType::TRAVEL_Absolute 表示绝对路径旅行
+				PlayerController->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
+			}
+		}
+	}
 }
+
 
 void UMenu::OnDestroySession(bool bWasSuccessful)
 {
@@ -121,11 +180,6 @@ void UMenu::OnStartSession(bool bWasSuccessful)
 
 void UMenu::HostButtonClicked()
 {
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Host button clicked!"));
-	}
-
 	if (IsValid(MultiplayerSessionSubsystem))
 	{
 		MultiplayerSessionSubsystem->CreateSession(NumPublicConnections, MatchType);
@@ -134,9 +188,9 @@ void UMenu::HostButtonClicked()
 
 void UMenu::JoinButtonClicked()
 {
-	if (GEngine)
+	if (IsValid(MultiplayerSessionSubsystem))
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Join button clicked!"));
+		MultiplayerSessionSubsystem->FindSessions(10000);
 	}
 }
 
