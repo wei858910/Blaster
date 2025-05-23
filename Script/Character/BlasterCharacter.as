@@ -35,6 +35,8 @@ class ABlasterCharacter : ACharacter
     UCombatComponent Combat;
     default Combat.SetIsReplicated(true);
 
+    default CharacterMovement.NavAgentProps.bCanCrouch = true;
+
     UPROPERTY(Category = "Input")
     UInputMappingContext InputMappingContext;
     default InputMappingContext = Cast<UInputMappingContext>(LoadObject(nullptr, "/Game/Input/IMC_Blaster.IMC_Blaster"));
@@ -54,6 +56,9 @@ class ABlasterCharacter : ACharacter
     UPROPERTY(Category = "Input")
     UInputAction EquipAction;
     default EquipAction = Cast<UInputAction>(LoadObject(nullptr, "/Game/Input/IA_Equip.IA_Equip"));
+
+    UPROPERTY(Category = "Input")
+    UInputAction CrouchAction = Cast<UInputAction>(LoadObject(nullptr, "/Game/Input/IA_Crouch.IA_Crouch"));
 
     UPROPERTY()
     float MoveSpeed = 100.0;
@@ -95,6 +100,8 @@ class ABlasterCharacter : ACharacter
                 // 将跳跃动作绑定到 OnJump 函数，当动作开始时调用
                 InputComponent.BindAction(JumpAction, ETriggerEvent::Started, FEnhancedInputActionHandlerDynamicSignature(this, n"OnJump"));
                 InputComponent.BindAction(EquipAction, ETriggerEvent::Started, FEnhancedInputActionHandlerDynamicSignature(this, n"OnEquip"));
+                InputComponent.BindAction(CrouchAction, ETriggerEvent::Triggered, FEnhancedInputActionHandlerDynamicSignature(this, n"OnCrouch"));
+                InputComponent.BindAction(CrouchAction, ETriggerEvent::Completed, FEnhancedInputActionHandlerDynamicSignature(this, n"OnCrouch"));
             }
         }
     }
@@ -178,6 +185,12 @@ class ABlasterCharacter : ACharacter
                 ServerEquipWeapon();
             }
         }
+    }
+
+    UFUNCTION()
+    private void OnCrouch(FInputActionValue ActionValue, float32 ElapsedTime, float32 TriggeredTime, const UInputAction SourceAction)
+    {
+        ActionValue.Get() == true ? Crouch() : UnCrouch(); 
     }
 
     void SetOverlappingWeapon(AWeapon Weapon)
