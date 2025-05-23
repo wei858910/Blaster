@@ -1,7 +1,9 @@
 class UCombatComponent : UActorComponent
 {
     ABlasterCharacter BlasterCharacter;
-    AWeapon           EquippedWeapon;
+
+    UPROPERTY(Replicated)
+    AWeapon EquippedWeapon;
 
     UFUNCTION(BlueprintOverride)
     void BeginPlay()

@@ -12,6 +12,9 @@ class UBlasterAnimInstance : UAnimInstance
     UPROPERTY(NotEditable, BlueprintReadOnly)
     protected bool bIsInAir;
 
+    UPROPERTY(NotEditable, BlueprintReadOnly)
+    protected bool bWeaponEquipped;
+
     UFUNCTION(BlueprintOverride)
     void BlueprintInitializeAnimation()
     {
@@ -38,5 +41,7 @@ class UBlasterAnimInstance : UAnimInstance
 
         // 检查 BlasterCharacter 是否正在加速，通过判断当前加速度的大小是否大于 0
         bIsAccelerating = BlasterCharacter.CharacterMovement.GetCurrentAcceleration().Size() > 0.0 ? true : false;
+
+        bWeaponEquipped = BlasterCharacter.IsWeaponEquipped();
     }
 };

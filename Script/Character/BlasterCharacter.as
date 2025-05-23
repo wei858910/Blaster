@@ -220,4 +220,9 @@ class ABlasterCharacter : ACharacter
             Combat.EquipWeapon(OverlappingWeapon);
         }
     }
+
+    bool IsWeaponEquipped()
+    {
+        return (IsValid(Combat) && IsValid(Combat.EquippedWeapon));
+    }
 };
