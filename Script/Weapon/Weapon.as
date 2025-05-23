@@ -61,9 +61,9 @@ class AWeapon : AActor
     private void OnSphereOverlap(UPrimitiveComponent OverlappedComponent, AActor OtherActor, UPrimitiveComponent OtherComp, int OtherBodyIndex, bool bFromSweep, const FHitResult&in SweepResult)
     {
         ABlasterCharacter BlasterCharacter = Cast<ABlasterCharacter>(OtherActor);
-        if (IsValid(BlasterCharacter) && IsValid(PickupWidget))
+        if (IsValid(BlasterCharacter))
         {
-            PickupWidget.SetVisibility(true);
+            BlasterCharacter.SetOverlappingWeapon(this);
         }
     }
 
@@ -71,9 +71,18 @@ class AWeapon : AActor
     private void OnSphereEndOverlap(UPrimitiveComponent OverlappedComponent, AActor OtherActor, UPrimitiveComponent OtherComp, int OtherBodyIndex)
     {
         ABlasterCharacter BlasterCharacter = Cast<ABlasterCharacter>(OtherActor);
-        if (IsValid(BlasterCharacter) && IsValid(PickupWidget))
+        if (IsValid(BlasterCharacter))
         {
-            PickupWidget.SetVisibility(false);
+            ShowPickupWidget(false);
+            BlasterCharacter.SetOverlappingWeapon(nullptr);
+        }
+    }
+
+    void ShowPickupWidget(bool bShowWidget)
+    {
+        if (IsValid(PickupWidget))
+        {
+            PickupWidget.SetVisibility(bShowWidget);
         }
     }
 };

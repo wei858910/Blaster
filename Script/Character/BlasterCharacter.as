@@ -25,6 +25,9 @@ class ABlasterCharacter : ACharacter
     default OverheadWidget.Space = EWidgetSpace::Screen;
     default OverheadWidget.bDrawAtDesiredSize = true;
 
+    UPROPERTY(Replicated, ReplicatedUsing = OnRep_OverlappingWeapon, ReplicationCondition = OwnerOnly)
+    AWeapon OverlappingWeapon; // 用于存储重叠的武器
+
     UPROPERTY(DefaultComponent, Category = "Input")
     UEnhancedInputComponent InputComponent;
 
@@ -150,5 +153,32 @@ class ABlasterCharacter : ACharacter
     private void OnJump(FInputActionValue ActionValue, float32 ElapsedTime, float32 TriggeredTime, const UInputAction SourceAction)
     {
         Jump();
+    }
+
+    void SetOverlappingWeapon(AWeapon Weapon)
+    {
+        OverlappingWeapon = Weapon;
+
+        // 检查当前角色是否是本地控制的，非 network controller 控制的
+        if (IsLocallyControlled())
+        {
+            if (IsValid(OverlappingWeapon))
+            {
+                OverlappingWeapon.ShowPickupWidget(true);
+            }
+        }
+    }
+
+    UFUNCTION()
+    void OnRep_OverlappingWeapon(AWeapon LastWeapon)
+    {
+        if (IsValid(LastWeapon))
+        {
+            LastWeapon.ShowPickupWidget(false);
+        }
+        if (IsValid(OverlappingWeapon))
+        {
+            OverlappingWeapon.ShowPickupWidget(true);
+        }
     }
 };
