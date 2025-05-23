@@ -31,6 +31,10 @@ class ABlasterCharacter : ACharacter
     UPROPERTY(DefaultComponent, Category = "Input")
     UEnhancedInputComponent InputComponent;
 
+    UPROPERTY(DefaultComponent)
+    UCombatComponent Combat;
+    default Combat.SetIsReplicated(true);
+
     UPROPERTY(Category = "Input")
     UInputMappingContext InputMappingContext;
     default InputMappingContext = Cast<UInputMappingContext>(LoadObject(nullptr, "/Game/Input/IMC_Blaster.IMC_Blaster"));
@@ -46,6 +50,10 @@ class ABlasterCharacter : ACharacter
     UPROPERTY(Category = "Input")
     UInputAction JumpAction;
     default JumpAction = Cast<UInputAction>(LoadObject(nullptr, "/Game/Input/IA_Jump.IA_Jump"));
+
+    UPROPERTY(Category = "Input")
+    UInputAction EquipAction;
+    default EquipAction = Cast<UInputAction>(LoadObject(nullptr, "/Game/Input/IA_Equip.IA_Equip"));
 
     UPROPERTY()
     float MoveSpeed = 100.0;
@@ -86,6 +94,7 @@ class ABlasterCharacter : ACharacter
                 InputComponent.BindAction(LookAction, ETriggerEvent::Triggered, FEnhancedInputActionHandlerDynamicSignature(this, n"OnLook"));
                 // 将跳跃动作绑定到 OnJump 函数，当动作开始时调用
                 InputComponent.BindAction(JumpAction, ETriggerEvent::Started, FEnhancedInputActionHandlerDynamicSignature(this, n"OnJump"));
+                InputComponent.BindAction(EquipAction, ETriggerEvent::Started, FEnhancedInputActionHandlerDynamicSignature(this, n"OnEquip"));
             }
         }
     }
@@ -153,6 +162,15 @@ class ABlasterCharacter : ACharacter
     private void OnJump(FInputActionValue ActionValue, float32 ElapsedTime, float32 TriggeredTime, const UInputAction SourceAction)
     {
         Jump();
+    }
+
+    UFUNCTION()
+    private void OnEquip(FInputActionValue ActionValue, float32 ElapsedTime, float32 TriggeredTime, const UInputAction SourceAction)
+    {
+        if (IsValid(Combat) && HasAuthority())
+        {
+            Combat.EquipWeapon(OverlappingWeapon);
+        }
     }
 
     void SetOverlappingWeapon(AWeapon Weapon)

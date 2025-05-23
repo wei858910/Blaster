@@ -84,4 +84,18 @@ class AWeapon : AActor
             PickupWidget.SetVisibility(bShowWidget);
         }
     }
+
+    void SetWeaponState(EWeaponType State)
+    {
+        WeaponState = State;
+        switch (WeaponState)
+        {
+            case EWeaponType::EWT_Equipped:
+            {
+                ShowPickupWidget(false);
+                AreaSphere.SetCollisionEnabled(ECollisionEnabled::NoCollision);
+                break;
+            }
+        }
+    }
 };
