@@ -1,5 +1,7 @@
 class ALobbyGameMode : AGameModeBase
 {
+    default DefaultPawnClass = ABlasterCharacter;
+
     UFUNCTION(BlueprintOverride)
     void OnPostLogin(APlayerController NewPlayer)
     {
@@ -11,6 +13,15 @@ class ALobbyGameMode : AGameModeBase
         {
             FString PlayerName = PlayerState.PlayerName;
             PrintWarning(f"Player {PlayerName} has joined the game.", 10.0);
+        }
+
+        if (NumberOfPlayers == 2)
+        {
+            bUseSeamlessTravel = true;
+            if (IsValid(World))
+            {
+                World.ServerTravel("/Game/Maps/BlasterMap?listen", false, false);
+            }
         }
     }
 
