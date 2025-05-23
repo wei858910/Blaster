@@ -39,6 +39,11 @@ class ABlasterCharacter : ACharacter
     UPROPERTY()
     float MoveSpeed = 100.0;
 
+    // 禁用控制器偏航旋转，使角色不会随控制器旋转而旋转
+    default bUseControllerRotationYaw = false;
+    // 启用角色朝向移动方向，使角色自动转向移动方向
+    default CharacterMovement.bOrientRotationToMovement = true;
+
     UFUNCTION(BlueprintOverride)
     void BeginPlay()
     {
