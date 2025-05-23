@@ -17,6 +17,14 @@ class ABlasterCharacter : ACharacter
     UCameraComponent FollowCamera;
     default FollowCamera.bUsePawnControlRotation = false;
 
+    UPROPERTY(DefaultComponent)
+    UWidgetComponent OverheadWidget;
+    default OverheadWidget.WidgetClass = Cast<UClass>(LoadObject(nullptr, "/Game/Blueprints/HUD/WBP_Overhead.WBP_Overhead_C"));
+    default OverheadWidget.AttachTo(Mesh);
+    default OverheadWidget.SetRelativeLocation(FVector(0.0, 0.0, CapsuleComponent.CapsuleHalfHeight * 2.0 + 50.0));
+    default OverheadWidget.Space = EWidgetSpace::Screen;
+    default OverheadWidget.bDrawAtDesiredSize = true;
+
     UPROPERTY(DefaultComponent, Category = "Input")
     UEnhancedInputComponent InputComponent;
 
@@ -47,6 +55,12 @@ class ABlasterCharacter : ACharacter
     UFUNCTION(BlueprintOverride)
     void BeginPlay()
     {
+        UOverheadWidget OverhWidget = Cast<UOverheadWidget>(OverheadWidget.GetUserWidgetObject());
+        if (IsValid(OverhWidget))
+        {
+            OverhWidget.ShowPlayerNetRole(this);
+        }
+
         // 尝试将控制器转换为玩家控制器
         APlayerController PlayerController = Cast<APlayerController>(GetController());
         // 检查玩家控制器是否有效
