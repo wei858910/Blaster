@@ -167,9 +167,16 @@ class ABlasterCharacter : ACharacter
     UFUNCTION()
     private void OnEquip(FInputActionValue ActionValue, float32 ElapsedTime, float32 TriggeredTime, const UInputAction SourceAction)
     {
-        if (IsValid(Combat) && HasAuthority())
+        if (IsValid(Combat))
         {
-            Combat.EquipWeapon(OverlappingWeapon);
+            if (HasAuthority())
+            {
+                Combat.EquipWeapon(OverlappingWeapon);
+            }
+            else
+            {
+                ServerEquipWeapon();
+            }
         }
     }
 
@@ -202,6 +209,15 @@ class ABlasterCharacter : ACharacter
         if (IsValid(OverlappingWeapon))
         {
             OverlappingWeapon.ShowPickupWidget(true);
+        }
+    }
+
+    UFUNCTION(Server)
+    void ServerEquipWeapon()
+    {
+        if (IsValid(OverlappingWeapon) && IsValid(Combat))
+        {
+            Combat.EquipWeapon(OverlappingWeapon);
         }
     }
 };

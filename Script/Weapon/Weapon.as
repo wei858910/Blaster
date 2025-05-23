@@ -26,7 +26,7 @@ class AWeapon : AActor
     default AreaSphere.SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
     default AreaSphere.SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon Properties")
+    UPROPERTY(Replicated, ReplicatedUsing = OnRep_WeaponState, VisibleAnywhere, BlueprintReadOnly, Category = "Weapon Properties")
     protected EWeaponType WeaponState; // 武器类型，枚举类型，用于标识武器的状态。
 
     UPROPERTY(DefaultComponent, Category = "Weapon Properties")
@@ -88,6 +88,20 @@ class AWeapon : AActor
     void SetWeaponState(EWeaponType State)
     {
         WeaponState = State;
+        switch (WeaponState)
+        {
+            case EWeaponType::EWT_Equipped:
+            {
+                ShowPickupWidget(false);
+                AreaSphere.SetCollisionEnabled(ECollisionEnabled::NoCollision);
+                break;
+            }
+        }
+    }
+
+    UFUNCTION()
+    void OnRep_WeaponState()
+    {
         switch (WeaponState)
         {
             case EWeaponType::EWT_Equipped:
