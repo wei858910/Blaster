@@ -10,6 +10,7 @@ enum EWeaponType
 class AWeapon : AActor
 {
     default bReplicates = true; // 启用网络同步，使该类的实例可以在网络上进行同步和更新。
+    default SetActorTickEnabled(false);
 
     UPROPERTY(DefaultComponent, RootComponent, Category = "Weapon Properties")
     USkeletalMeshComponent WeaponMesh;
@@ -28,9 +29,20 @@ class AWeapon : AActor
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon Properties")
     protected EWeaponType WeaponState; // 武器类型，枚举类型，用于标识武器的状态。
 
+    UPROPERTY(DefaultComponent, Category = "Weapon Properties")
+    UWidgetComponent PickupWidget; // 拾取小部件，用于显示拾取提示。
+    default PickupWidget.WidgetClass = Cast<UClass>(LoadObject(nullptr, "/Game/Blueprints/HUD/WBP_Pickup.WBP_Pickup_C"));
+    default PickupWidget.bDrawAtDesiredSize = true;
+    default PickupWidget.Space = EWidgetSpace::Screen;
+
     UFUNCTION(BlueprintOverride)
     void BeginPlay()
     {
+        if (IsValid(PickupWidget))
+        {
+            PickupWidget.SetVisibility(false);
+        }
+
         // 检查当前角色是否具有服务器权限。
         if (HasAuthority())
         {
@@ -38,6 +50,30 @@ class AWeapon : AActor
             AreaSphere.SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
             // 设置 AreaSphere 对玩家角色碰撞通道的响应为重叠，当玩家进入该区域时触发重叠事件。
             AreaSphere.SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+            // 绑定 AreaSphere 的 OnComponentBeginOverlap 事件到 OnSphereOverlap 函数，当有组件与 AreaSphere 发生重叠时调用该函数。
+            AreaSphere.OnComponentBeginOverlap.AddUFunction(this, n"OnSphereOverlap");
+            // 绑定 AreaSphere 的 OnComponentEndOverlap 事件到 OnSphereEndOverlap 函数，当有组件与 AreaSphere 结束重叠时调用该函数。
+            AreaSphere.OnComponentEndOverlap.AddUFunction(this, n"OnSphereEndOverlap");
+        }
+    }
+
+    UFUNCTION()
+    private void OnSphereOverlap(UPrimitiveComponent OverlappedComponent, AActor OtherActor, UPrimitiveComponent OtherComp, int OtherBodyIndex, bool bFromSweep, const FHitResult&in SweepResult)
+    {
+        ABlasterCharacter BlasterCharacter = Cast<ABlasterCharacter>(OtherActor);
+        if (IsValid(BlasterCharacter) && IsValid(PickupWidget))
+        {
+            PickupWidget.SetVisibility(true);
+        }
+    }
+
+    UFUNCTION()
+    private void OnSphereEndOverlap(UPrimitiveComponent OverlappedComponent, AActor OtherActor, UPrimitiveComponent OtherComp, int OtherBodyIndex)
+    {
+        ABlasterCharacter BlasterCharacter = Cast<ABlasterCharacter>(OtherActor);
+        if (IsValid(BlasterCharacter) && IsValid(PickupWidget))
+        {
+            PickupWidget.SetVisibility(false);
         }
     }
 };
