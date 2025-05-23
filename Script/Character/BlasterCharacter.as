@@ -55,10 +55,10 @@ class ABlasterCharacter : ACharacter
     UFUNCTION(BlueprintOverride)
     void BeginPlay()
     {
-        UOverheadWidget OverhWidget = Cast<UOverheadWidget>(OverheadWidget.GetUserWidgetObject());
-        if (IsValid(OverhWidget))
+        UOverheadWidget OverWidget = Cast<UOverheadWidget>(OverheadWidget.GetUserWidgetObject());
+        if (IsValid(OverWidget))
         {
-            OverhWidget.ShowPlayerNetRole(this);
+            OverWidget.ShowPlayerNetRole(this);
         }
 
         // 尝试将控制器转换为玩家控制器
