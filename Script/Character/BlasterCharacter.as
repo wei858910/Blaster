@@ -47,18 +47,27 @@ class ABlasterCharacter : ACharacter
     UFUNCTION(BlueprintOverride)
     void BeginPlay()
     {
-
+        // 尝试将控制器转换为玩家控制器
         APlayerController PlayerController = Cast<APlayerController>(GetController());
+        // 检查玩家控制器是否有效
         if (IsValid(PlayerController))
         {
+            // 为玩家控制器创建一个增强输入组件
             InputComponent = UEnhancedInputComponent::Create(PlayerController);
+            // 将新创建的输入组件推送到玩家控制器的输入栈中
             PlayerController.PushInputComponent(InputComponent);
+            // 获取玩家控制器的增强输入子系统
             UEnhancedInputLocalPlayerSubsystem EnhancedInputSubsystem = UEnhancedInputLocalPlayerSubsystem::Get(PlayerController);
+            // 检查增强输入子系统是否有效
             if (IsValid(EnhancedInputSubsystem))
             {
+                // 为增强输入子系统添加输入映射上下文
                 EnhancedInputSubsystem.AddMappingContext(InputMappingContext, 0, FModifyContextOptions());
+                // 将移动动作绑定到 OnMove 函数，当动作触发时调用
                 InputComponent.BindAction(MoveAction, ETriggerEvent::Triggered, FEnhancedInputActionHandlerDynamicSignature(this, n"OnMove"));
+                // 将查看动作绑定到 OnLook 函数，当动作触发时调用
                 InputComponent.BindAction(LookAction, ETriggerEvent::Triggered, FEnhancedInputActionHandlerDynamicSignature(this, n"OnLook"));
+                // 将跳跃动作绑定到 OnJump 函数，当动作开始时调用
                 InputComponent.BindAction(JumpAction, ETriggerEvent::Started, FEnhancedInputActionHandlerDynamicSignature(this, n"OnJump"));
             }
         }
@@ -67,37 +76,56 @@ class ABlasterCharacter : ACharacter
     UFUNCTION()
     private void OnMove(FInputActionValue ActionValue, float32 ElapsedTime, float32 TriggeredTime, const UInputAction SourceAction)
     {
+        // 获取输入操作的二维轴值（对应移动方向的XY分量）
         FVector2D MovementVector = ActionValue.GetAxis2D();
-        float     X = MovementVector.X;
-        float     Y = MovementVector.Y;
+        float     X = MovementVector.X; // 水平方向输入值（左负右正）
+        float     Y = MovementVector.Y; // 垂直方向输入值（后负前正）
 
+        // 基于控制器的偏航旋转创建方向旋转（仅保留Yaw轴）
         const FRotator YawRotation(0.0, Controller.GetControlRotation().Yaw, 0.0);
 
+        // 获取世界时间增量（用于平滑移动计算）
         float DeltaTime = Gameplay::GetWorldDeltaSeconds();
 
+        // 处理水平方向移动（左右）
         if (X != 0.0)
         {
+            // 向角色右方向添加移动输入（速度 = 基础速度 * 输入值 * 时间增量）
             AddMovementInput(YawRotation.RightVector, MoveSpeed * X * DeltaTime);
         }
 
+        // 处理垂直方向移动（前后）
         if (Y != 0.0)
         {
+            // 向角色前方向添加移动输入（速度 = 基础速度 * 输入值 * 时间增量）
             AddMovementInput(YawRotation.ForwardVector, MoveSpeed * Y * DeltaTime);
         }
     }
 
+    /**
+     * @brief 处理视角移动输入的函数
+     * @param ActionValue 输入动作的值，包含视角移动的方向和幅度
+     * @param ElapsedTime 从输入开始到现在经过的总时间
+     * @param TriggeredTime 输入动作触发的时间
+     * @param SourceAction 触发此输入的输入动作对象
+     */
     UFUNCTION()
     private void OnLook(FInputActionValue ActionValue, float32 ElapsedTime, float32 TriggeredTime, const UInputAction SourceAction)
     {
+        // 从输入动作值中获取二维视角移动向量
         FVector2D LookVector = ActionValue.GetAxis2D();
-        float     X = LookVector.X;
-        float     Y = LookVector.Y;
+        // 获取水平方向的视角移动值
+        float X = LookVector.X;
+        // 获取垂直方向的视角移动值
+        float Y = LookVector.Y;
 
+        // 如果水平方向有输入，则添加控制器的偏航（左右）旋转输入
         if (X != 0.0)
         {
             AddControllerYawInput(X);
         }
 
+        // 如果垂直方向有输入，则添加控制器的俯仰（上下）旋转输入，取反是为了符合常规操作习惯
         if (Y != 0.0)
         {
             AddControllerPitchInput(-Y);
