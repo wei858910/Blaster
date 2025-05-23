@@ -157,6 +157,11 @@ class ABlasterCharacter : ACharacter
 
     void SetOverlappingWeapon(AWeapon Weapon)
     {
+        if (IsValid(OverlappingWeapon))
+        {
+            OverlappingWeapon.ShowPickupWidget(false);
+        }
+
         OverlappingWeapon = Weapon;
 
         // 检查当前角色是否是本地控制的，非 network controller 控制的

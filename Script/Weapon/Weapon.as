@@ -73,7 +73,6 @@ class AWeapon : AActor
         ABlasterCharacter BlasterCharacter = Cast<ABlasterCharacter>(OtherActor);
         if (IsValid(BlasterCharacter))
         {
-            ShowPickupWidget(false);
             BlasterCharacter.SetOverlappingWeapon(nullptr);
         }
     }
