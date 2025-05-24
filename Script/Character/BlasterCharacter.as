@@ -60,6 +60,9 @@ class ABlasterCharacter : ACharacter
     UPROPERTY(Category = "Input")
     UInputAction CrouchAction = Cast<UInputAction>(LoadObject(nullptr, "/Game/Input/IA_Crouch.IA_Crouch"));
 
+    UPROPERTY(Category = "Input")
+    UInputAction AimAction = Cast<UInputAction>(LoadObject(nullptr, "/Game/Input/IA_Aim.IA_Aim"));
+
     UPROPERTY()
     float MoveSpeed = 100.0;
 
@@ -102,6 +105,8 @@ class ABlasterCharacter : ACharacter
                 InputComponent.BindAction(EquipAction, ETriggerEvent::Started, FEnhancedInputActionHandlerDynamicSignature(this, n"OnEquip"));
                 InputComponent.BindAction(CrouchAction, ETriggerEvent::Triggered, FEnhancedInputActionHandlerDynamicSignature(this, n"OnCrouch"));
                 InputComponent.BindAction(CrouchAction, ETriggerEvent::Completed, FEnhancedInputActionHandlerDynamicSignature(this, n"OnCrouch"));
+                InputComponent.BindAction(AimAction, ETriggerEvent::Triggered, FEnhancedInputActionHandlerDynamicSignature(this, n"OnAim"));
+                InputComponent.BindAction(AimAction, ETriggerEvent::Completed, FEnhancedInputActionHandlerDynamicSignature(this, n"OnAim"));
             }
         }
     }
@@ -176,21 +181,30 @@ class ABlasterCharacter : ACharacter
     {
         if (IsValid(Combat))
         {
-            if (HasAuthority())
-            {
-                Combat.EquipWeapon(OverlappingWeapon);
-            }
-            else
-            {
-                ServerEquipWeapon();
-            }
+            HasAuthority() ? Combat.EquipWeapon(OverlappingWeapon) : ServerEquipWeapon();
         }
     }
 
     UFUNCTION()
     private void OnCrouch(FInputActionValue ActionValue, float32 ElapsedTime, float32 TriggeredTime, const UInputAction SourceAction)
     {
-        ActionValue.Get() == true ? Crouch() : UnCrouch(); 
+        ActionValue.Get() ? Crouch() : UnCrouch();
+    }
+
+    UFUNCTION()
+    private void OnAim(FInputActionValue ActionValue, float32 ElapsedTime, float32 TriggeredTime, const UInputAction SourceAction)
+    {
+        if (IsValid(Combat))
+        {
+            if (HasAuthority())
+            {
+                Combat.bAiming = ActionValue.Get();
+            }
+            else
+            {
+                Combat.SetAiming(ActionValue.Get());
+            }
+        }
     }
 
     void SetOverlappingWeapon(AWeapon Weapon)
@@ -237,5 +251,10 @@ class ABlasterCharacter : ACharacter
     bool IsWeaponEquipped()
     {
         return (IsValid(Combat) && IsValid(Combat.EquippedWeapon));
+    }
+
+    bool IsAiming()
+    {
+        return (IsValid(Combat) && Combat.bAiming);
     }
 };

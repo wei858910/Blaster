@@ -5,6 +5,9 @@ class UCombatComponent : UActorComponent
     UPROPERTY(Replicated)
     AWeapon EquippedWeapon;
 
+    UPROPERTY(Replicated)
+    bool bAiming = false;
+
     UFUNCTION(BlueprintOverride)
     void BeginPlay()
     {
@@ -20,5 +23,11 @@ class UCombatComponent : UActorComponent
             EquippedWeapon.SetWeaponState(EWeaponType::EWT_Equipped);
             EquippedWeapon.AttachToComponent(BlasterCharacter.Mesh, n"RightHandSocket", EAttachmentRule::SnapToTarget);
         }
+    }
+
+    UFUNCTION(Server)
+    void SetAiming(bool bIsAiming)
+    {
+        bAiming = bIsAiming;
     }
 };

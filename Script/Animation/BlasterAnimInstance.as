@@ -18,6 +18,9 @@ class UBlasterAnimInstance : UAnimInstance
     UPROPERTY(NotEditable, BlueprintReadOnly)
     protected bool bIsCrouched;
 
+    UPROPERTY(NotEditable, BlueprintReadOnly)
+    protected bool bAiming;
+
     UFUNCTION(BlueprintOverride)
     void BlueprintInitializeAnimation()
     {
@@ -48,5 +51,7 @@ class UBlasterAnimInstance : UAnimInstance
         bWeaponEquipped = BlasterCharacter.IsWeaponEquipped();
 
         bIsCrouched = BlasterCharacter.bIsCrouched;
+
+        bAiming = BlasterCharacter.IsAiming();
     }
 };
