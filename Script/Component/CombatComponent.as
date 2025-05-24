@@ -2,7 +2,7 @@ class UCombatComponent : UActorComponent
 {
     ABlasterCharacter BlasterCharacter;
 
-    UPROPERTY(Replicated)
+    UPROPERTY(Replicated, ReplicatedUsing = OnRep_EquippedWeapon)
     AWeapon EquippedWeapon;
 
     UPROPERTY(Replicated)
@@ -23,6 +23,10 @@ class UCombatComponent : UActorComponent
             EquippedWeapon.SetWeaponState(EWeaponType::EWT_Equipped);
             EquippedWeapon.AttachToComponent(BlasterCharacter.Mesh, n"RightHandSocket", EAttachmentRule::SnapToTarget);
         }
+        // 禁用角色移动时自动朝向移动方向
+        BlasterCharacter.CharacterMovement.bOrientRotationToMovement = false;
+        // 启用使用控制器的 Yaw 旋转来控制角色朝向
+        BlasterCharacter.bUseControllerRotationYaw = true;
     }
 
     void SetAiming(bool bIsAiming)
@@ -35,5 +39,15 @@ class UCombatComponent : UActorComponent
     void ServerSetAiming(bool bIsAiming)
     {
         bAiming = bIsAiming;
+    }
+
+    UFUNCTION()
+    void OnRep_EquippedWeapon()
+    {
+        if (IsValid(EquippedWeapon) && IsValid(BlasterCharacter))
+        {
+            BlasterCharacter.CharacterMovement.bOrientRotationToMovement = false;
+            BlasterCharacter.bUseControllerRotationYaw = true;
+        }
     }
 };

@@ -21,6 +21,16 @@ class UBlasterAnimInstance : UAnimInstance
     UPROPERTY(NotEditable, BlueprintReadOnly)
     protected bool bAiming;
 
+    UPROPERTY(NotEditable, BlueprintReadOnly)
+    float YawOffset; // 用于存储 Yaw 偏移量的变量，用于控制角色的朝向
+
+    UPROPERTY(NotEditable, BlueprintReadOnly)
+    float Lean; // 用于存储 Lean（leaning）的变量，用于控制角色的侧倾角度
+
+    FRotator CharacterRotationLastFrame; // 用于存储上一帧的角色旋转器，用于计算 Lean（leaning）的变化量
+    FRotator CharacterRotation;          // 用于存储当前帧的角色旋转器，用于计算 Lean（leaning）的变化量
+    FRotator DeltaRotation;
+
     UFUNCTION(BlueprintOverride)
     void BlueprintInitializeAnimation()
     {
@@ -53,5 +63,21 @@ class UBlasterAnimInstance : UAnimInstance
         bIsCrouched = BlasterCharacter.bIsCrouched;
 
         bAiming = BlasterCharacter.IsAiming();
+
+        // 计算 Yaw 偏移量，用于控制角色的朝向
+        FRotator AimRotation = BlasterCharacter.GetBaseAimRotation();
+        FRotator MovementRotation = FRotator::MakeFromX(BlasterCharacter.GetVelocity()); // 从速度向量创建旋转器，用于获取角色的移动方向
+        FRotator DeltaRot = MovementRotation - AimRotation;                              // 计算移动方向和瞄准方向之间的差异
+        DeltaRot.Normalize();
+        DeltaRotation = Math::RInterpTo(DeltaRotation, DeltaRot, DeltaTimeX, 15.0);
+        YawOffset = DeltaRotation.Yaw; // 计算 Yaw 偏移量，用于控制角色的朝向
+
+        // 计算 Lean（leaning）的角度，用于控制角色的侧倾角度
+        CharacterRotationLastFrame = CharacterRotation;                      // 保存上一帧的角色旋转器
+        CharacterRotation = BlasterCharacter.GetActorRotation();             // 获取当前帧的角色旋转
+        DeltaRot = CharacterRotation - CharacterRotationLastFrame;           // 计算角色旋转器的变化量
+        const float Target = DeltaRot.Yaw / DeltaTimeX;                      // 计算目标 Lean（leaning）的角度
+        const float Interp = Math::FInterpTo(Lean, Target, DeltaTimeX, 6.0); // 使用插值函数平滑过渡 Lean（leaning）的角度
+        Lean = Math::Clamp(Interp, -90.0, 90.0);                             // 限制 Lean（leaning）的角度在 -90 到 90 度之间
     }
 };
