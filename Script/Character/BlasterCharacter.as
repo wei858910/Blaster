@@ -196,14 +196,7 @@ class ABlasterCharacter : ACharacter
     {
         if (IsValid(Combat))
         {
-            if (HasAuthority())
-            {
-                Combat.bAiming = ActionValue.Get();
-            }
-            else
-            {
-                Combat.SetAiming(ActionValue.Get());
-            }
+            Combat.SetAiming(ActionValue.Get());
         }
     }
 

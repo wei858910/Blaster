@@ -25,8 +25,14 @@ class UCombatComponent : UActorComponent
         }
     }
 
-    UFUNCTION(Server)
     void SetAiming(bool bIsAiming)
+    {
+        bAiming = bIsAiming;
+        ServerSetAiming(bIsAiming);
+    }
+
+    UFUNCTION(Server)
+    void ServerSetAiming(bool bIsAiming)
     {
         bAiming = bIsAiming;
     }
