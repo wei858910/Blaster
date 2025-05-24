@@ -71,6 +71,9 @@ class ABlasterCharacter : ACharacter
     // 启用角色朝向移动方向，使角色自动转向移动方向
     default CharacterMovement.bOrientRotationToMovement = true;
 
+    default CharacterMovement.JumpZVelocity = 1600.0;
+    default CharacterMovement.GravityScale = 3.0;
+
     UFUNCTION(BlueprintOverride)
     void BeginPlay()
     {
