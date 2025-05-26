@@ -73,6 +73,7 @@ class ABlasterCharacter : ACharacter
 
     default CharacterMovement.JumpZVelocity = 1600.0;
     default CharacterMovement.GravityScale = 3.0;
+    default CharacterMovement.MaxWalkSpeedCrouched = 350.0;
 
     UFUNCTION(BlueprintOverride)
     void BeginPlay()
