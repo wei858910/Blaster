@@ -27,6 +27,12 @@ class UBlasterAnimInstance : UAnimInstance
     UPROPERTY(NotEditable, BlueprintReadOnly)
     float Lean; // 用于存储 Lean（leaning）的变量，用于控制角色的侧倾角度
 
+    UPROPERTY(NotEditable, BlueprintReadOnly)
+    float AO_Yaw; // 用于存储 Aiming Offset 的 Yaw 角度，用于控制角色的瞄准偏移
+
+    UPROPERTY(NotEditable, BlueprintReadOnly)
+    float AO_Pitch; // 用于存储 Aiming Offset 的 Pitch 角度，用于控制角色的瞄准偏移
+
     FRotator CharacterRotationLastFrame; // 用于存储上一帧的角色旋转器，用于计算 Lean（leaning）的变化量
     FRotator CharacterRotation;          // 用于存储当前帧的角色旋转器，用于计算 Lean（leaning）的变化量
     FRotator DeltaRotation;
@@ -79,5 +85,8 @@ class UBlasterAnimInstance : UAnimInstance
         const float Target = DeltaRot.Yaw / DeltaTimeX;                      // 计算目标 Lean（leaning）的角度
         const float Interp = Math::FInterpTo(Lean, Target, DeltaTimeX, 6.0); // 使用插值函数平滑过渡 Lean（leaning）的角度
         Lean = Math::Clamp(Interp, -90.0, 90.0);                             // 限制 Lean（leaning）的角度在 -90 到 90 度之间
+
+        AO_Yaw = BlasterCharacter.GetAOYaw();     // 获取 Aiming Offset 的 Yaw 角度，用于控制角色的瞄准偏移
+        AO_Pitch = BlasterCharacter.GetAOPitch(); // 获取 Aiming Offset 的 Pitch 角度，用于控制角色的瞄准偏移
     }
 };

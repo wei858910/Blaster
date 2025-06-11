@@ -75,6 +75,9 @@ class ABlasterCharacter : ACharacter
     default CharacterMovement.GravityScale = 3.0;
     default CharacterMovement.MaxWalkSpeedCrouched = 350.0;
 
+    private float AO_Yaw;   // 用于存储 Aiming Offset 的 Yaw 角度，用于控制角色的瞄准偏移
+    private float AO_Pitch; // 用于存储 Aiming Offset 的 Pitch 角度，用于控制角色的瞄准偏移
+
     UFUNCTION(BlueprintOverride)
     void BeginPlay()
     {
@@ -113,6 +116,12 @@ class ABlasterCharacter : ACharacter
                 InputComponent.BindAction(AimAction, ETriggerEvent::Completed, FEnhancedInputActionHandlerDynamicSignature(this, n"OnAim"));
             }
         }
+    }
+
+    UFUNCTION(BlueprintOverride)
+    void Tick(float DeltaSeconds)
+    {
+        AimOffset(DeltaSeconds);
     }
 
     UFUNCTION()
@@ -202,6 +211,75 @@ class ABlasterCharacter : ACharacter
         {
             Combat.SetAiming(ActionValue.Get());
         }
+    }
+
+    FRotator StartingAimRotation; // 用于存储初始瞄准旋转
+
+    protected void AimOffset(float DeltaTime)
+    {
+        if (!IsValid(Combat) || !IsValid(Combat.EquippedWeapon))
+        {
+            AO_Yaw = 0.0;
+            AO_Pitch = 0.0;
+            return;
+        }
+
+        FVector Velocity = GetVelocity();
+        // 将速度向量的 Z 分量置为 0，忽略垂直方向的速度
+        Velocity.Z = 0.0;
+        // 计算水平方向的速度大小
+        float Speed = Velocity.Size();
+        bool  bIsInAir = CharacterMovement.IsFalling();
+
+        if (Speed == 0.0 && !bIsInAir)
+        {
+            // 计算自开始瞄准以来的Yaw（水平旋转）变化量。
+            FRotator CurrentAimRotation = FRotator(0.0, GetBaseAimRotation().Yaw, 0.0);
+            FRotator DeltaAimRotation = (CurrentAimRotation - StartingAimRotation).Normalized;
+            AO_Yaw = DeltaAimRotation.Yaw;
+            bUseControllerRotationYaw = false; // 禁用控制器偏航旋转
+        }
+
+        /**
+         * 如果角色正在移动或处于空中，则更新 StartingAimRotation。
+         *
+         * 当角色速度大于零或处于空中（bIsInAir 为 true）时，
+         * 将 StartingAimRotation 设置为当前基础瞄准旋转的 Yaw，Pitch 和 Roll 为零的新 FRotator。
+         * 这通常用于在角色移动或跳跃时追踪角色的瞄准方向。
+         */
+        if (Speed > 0 || bIsInAir)
+        {
+            StartingAimRotation = FRotator(0.0, GetBaseAimRotation().Yaw, 0.0);
+            AO_Yaw = 0.0;
+            bUseControllerRotationYaw = true; // 启用控制器偏航旋转
+        }
+        CaculateAO_Pitch();
+    }
+
+    void CaculateAO_Pitch()
+    {
+        /**
+         * 根据角色的基础瞄准旋转更新瞄准偏移的俯仰角（AO_Pitch）。
+         * 如果俯仰角大于90度且角色不是本地控制，则将俯仰角从[270, 360]范围映射到[-90, 0]范围。
+         * 这样可以确保网络同步时远程角色的俯仰角不会出现异常（因为Pitch角度会环绕）。
+         */
+        AO_Pitch = GetBaseAimRotation().Pitch;
+        if(AO_Pitch > 90.0 && !IsLocallyControlled())
+        {
+            FVector2D InRange(270.0, 360.0);
+            FVector2D OutRange(-90.0, 0.0);
+            AO_Pitch = Math::GetMappedRangeValueClamped(InRange, OutRange, AO_Pitch);
+        }
+    }
+
+    float GetAOYaw()
+    {
+        return AO_Yaw;
+    }
+
+    float GetAOPitch()
+    {
+        return AO_Pitch;
     }
 
     void SetOverlappingWeapon(AWeapon Weapon)
