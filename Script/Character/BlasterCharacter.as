@@ -281,6 +281,13 @@ class ABlasterCharacter : ACharacter
         return AO_Pitch;
     }
 
+    AWeapon GetEquippedWeapon() const
+    {
+        if (Combat == nullptr)
+            return nullptr;
+        return Combat.EquippedWeapon;
+    }
+
     void SetOverlappingWeapon(AWeapon Weapon)
     {
         if (IsValid(OverlappingWeapon))

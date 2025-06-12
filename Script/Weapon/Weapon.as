@@ -112,4 +112,9 @@ class AWeapon : AActor
             }
         }
     }
+
+    USkeletalMeshComponent GetWeaponMesh() const
+    {
+        return WeaponMesh;
+    }
 };

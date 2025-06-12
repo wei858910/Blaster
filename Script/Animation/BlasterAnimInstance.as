@@ -15,6 +15,8 @@ class UBlasterAnimInstance : UAnimInstance
     UPROPERTY(NotEditable, BlueprintReadOnly)
     protected bool bWeaponEquipped;
 
+    AWeapon EquippedWeapon;
+
     UPROPERTY(NotEditable, BlueprintReadOnly)
     protected bool bIsCrouched;
 
@@ -32,6 +34,9 @@ class UBlasterAnimInstance : UAnimInstance
 
     UPROPERTY(NotEditable, BlueprintReadOnly)
     float AO_Pitch; // 用于存储 Aiming Offset 的 Pitch 角度，用于控制角色的瞄准偏移
+
+    UPROPERTY(NotEditable, BlueprintReadOnly)
+    FTransform LeftHandTransform;
 
     FRotator CharacterRotationLastFrame; // 用于存储上一帧的角色旋转器，用于计算 Lean（leaning）的变化量
     FRotator CharacterRotation;          // 用于存储当前帧的角色旋转器，用于计算 Lean（leaning）的变化量
@@ -66,6 +71,8 @@ class UBlasterAnimInstance : UAnimInstance
 
         bWeaponEquipped = BlasterCharacter.IsWeaponEquipped();
 
+        EquippedWeapon = BlasterCharacter.GetEquippedWeapon();
+
         bIsCrouched = BlasterCharacter.bIsCrouched;
 
         bAiming = BlasterCharacter.IsAiming();
@@ -79,14 +86,27 @@ class UBlasterAnimInstance : UAnimInstance
         YawOffset = DeltaRotation.Yaw; // 计算 Yaw 偏移量，用于控制角色的朝向
 
         // 计算 Lean（leaning）的角度，用于控制角色的侧倾角度
-        CharacterRotationLastFrame = CharacterRotation;                      // 保存上一帧的角色旋转器
-        CharacterRotation = BlasterCharacter.GetActorRotation();             // 获取当前帧的角色旋转
-        DeltaRot = CharacterRotation - CharacterRotationLastFrame;           // 计算角色旋转器的变化量
-        const float Target = DeltaRot.Yaw / DeltaTimeX;                      // 计算目标 Lean（leaning）的角度
-        const float Interp = Math::FInterpTo(Lean, Target, DeltaTimeX, 6.0); // 使用插值函数平滑过渡 Lean（leaning）的角度
-        Lean = Math::Clamp(Interp, -90.0, 90.0);                             // 限制 Lean（leaning）的角度在 -90 到 90 度之间
+        CharacterRotationLastFrame = CharacterRotation;            // 保存上一帧的角色旋转器
+        CharacterRotation = BlasterCharacter.GetActorRotation();   // 获取当前帧的角色旋转
+        DeltaRot = CharacterRotation - CharacterRotationLastFrame; // 计算角色旋转器的变化量
+        if (DeltaTimeX != 0.0)
+        {
+            const float Target = DeltaRot.Yaw / DeltaTimeX;                      // 计算目标 Lean（leaning）的角度
+            const float Interp = Math::FInterpTo(Lean, Target, DeltaTimeX, 6.0); // 使用插值函数平滑过渡 Lean（leaning）的角度
+            Lean = Math::Clamp(Interp, -90.0, 90.0);                             // 限制 Lean（leaning）的角度在 -90 到 90 度之间
+        }
 
         AO_Yaw = BlasterCharacter.GetAOYaw();     // 获取 Aiming Offset 的 Yaw 角度，用于控制角色的瞄准偏移
         AO_Pitch = BlasterCharacter.GetAOPitch(); // 获取 Aiming Offset 的 Pitch 角度，用于控制角色的瞄准偏移
+
+        if (bWeaponEquipped && IsValid(EquippedWeapon) && IsValid(EquippedWeapon.GetWeaponMesh()) && IsValid(BlasterCharacter.Mesh))
+        {
+            LeftHandTransform = EquippedWeapon.GetWeaponMesh().GetSocketTransform(n"LeftHandSocket");
+            FVector  OutPosition;
+            FRotator OutRotation;
+            BlasterCharacter.Mesh.TransformToBoneSpace(n"hand_r", LeftHandTransform.GetLocation(), FRotator::ZeroRotator, OutPosition, OutRotation);
+            LeftHandTransform.SetLocation(OutPosition);
+            LeftHandTransform.SetRotation(FQuat(OutRotation));
+        }
     }
 };
