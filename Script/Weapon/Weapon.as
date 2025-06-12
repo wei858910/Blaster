@@ -1,5 +1,5 @@
 
-enum EWeaponType
+enum EWeaponState
 {
     EWT_Initial,
     EWT_Equipped,
@@ -27,7 +27,7 @@ class AWeapon : AActor
     default AreaSphere.SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
     UPROPERTY(Replicated, ReplicatedUsing = OnRep_WeaponState, VisibleAnywhere, BlueprintReadOnly, Category = "Weapon Properties")
-    protected EWeaponType WeaponState; // 武器类型，枚举类型，用于标识武器的状态。
+    protected EWeaponState WeaponState; // 武器类型，枚举类型，用于标识武器的状态。
 
     UPROPERTY(DefaultComponent, Category = "Weapon Properties")
     UWidgetComponent PickupWidget; // 拾取小部件，用于显示拾取提示。
@@ -85,12 +85,12 @@ class AWeapon : AActor
         }
     }
 
-    void SetWeaponState(EWeaponType State)
+    void SetWeaponState(EWeaponState State)
     {
         WeaponState = State;
         switch (WeaponState)
         {
-            case EWeaponType::EWT_Equipped:
+            case EWeaponState::EWT_Equipped:
             {
                 ShowPickupWidget(false);
                 AreaSphere.SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -104,7 +104,7 @@ class AWeapon : AActor
     {
         switch (WeaponState)
         {
-            case EWeaponType::EWT_Equipped:
+            case EWeaponState::EWT_Equipped:
             {
                 ShowPickupWidget(false);
                 AreaSphere.SetCollisionEnabled(ECollisionEnabled::NoCollision);

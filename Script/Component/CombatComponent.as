@@ -20,7 +20,7 @@ class UCombatComponent : UActorComponent
         {
             EquippedWeapon = WeaponToEquip;
             EquippedWeapon.SetOwner(BlasterCharacter);
-            EquippedWeapon.SetWeaponState(EWeaponType::EWT_Equipped);
+            EquippedWeapon.SetWeaponState(EWeaponState::EWT_Equipped);
             EquippedWeapon.AttachToComponent(BlasterCharacter.Mesh, n"RightHandSocket", EAttachmentRule::SnapToTarget);
         }
         // 禁用角色移动时自动朝向移动方向
