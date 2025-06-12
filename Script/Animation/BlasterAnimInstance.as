@@ -38,6 +38,9 @@ class UBlasterAnimInstance : UAnimInstance
     UPROPERTY(NotEditable, BlueprintReadOnly)
     FTransform LeftHandTransform;
 
+    UPROPERTY(NotEditable, BlueprintReadOnly)
+    ETurningInPlace TurningInPlace;
+
     FRotator CharacterRotationLastFrame; // 用于存储上一帧的角色旋转器，用于计算 Lean（leaning）的变化量
     FRotator CharacterRotation;          // 用于存储当前帧的角色旋转器，用于计算 Lean（leaning）的变化量
     FRotator DeltaRotation;
@@ -76,6 +79,8 @@ class UBlasterAnimInstance : UAnimInstance
         bIsCrouched = BlasterCharacter.bIsCrouched;
 
         bAiming = BlasterCharacter.IsAiming();
+
+        TurningInPlace = BlasterCharacter.GetTurningInPlace();
 
         // 计算 Yaw 偏移量，用于控制角色的朝向
         FRotator AimRotation = BlasterCharacter.GetBaseAimRotation();

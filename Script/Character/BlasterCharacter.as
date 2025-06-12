@@ -76,7 +76,10 @@ class ABlasterCharacter : ACharacter
     default CharacterMovement.MaxWalkSpeedCrouched = 350.0;
 
     private float AO_Yaw; // 用于存储 Aiming Offset 的 Yaw 角度，用于控制角色的瞄准偏移
-    private float AO_Pitch; // 用于存储 Aiming Offset 的 Pitch 角度，用于控制角色的瞄准偏移
+    private float    AO_Pitch;            // 用于存储 Aiming Offset 的 Pitch 角度，用于控制角色的瞄准偏移
+    FRotator StartingAimRotation; // 用于存储初始瞄准旋转
+
+    ETurningInPlace TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 
     UFUNCTION(BlueprintOverride)
     void BeginPlay()
@@ -213,13 +216,23 @@ class ABlasterCharacter : ACharacter
         }
     }
 
-    FRotator StartingAimRotation; // 用于存储初始瞄准旋转
-
     float CalculateSpeed()
     {
         FVector CurrentVelocity = GetVelocity();
         CurrentVelocity.Z = 0.0;
         return CurrentVelocity.Size();
+    }
+
+    void TurnInPlace(float DeltaTime)
+    {
+        if (AO_Yaw > 90.0)
+        {
+            TurningInPlace = ETurningInPlace::ETIP_Right;
+        }
+        else if (AO_Yaw < -90.0)
+        {
+            TurningInPlace = ETurningInPlace::ETIP_Left;
+        }
     }
 
     protected void AimOffset(float DeltaTime)
@@ -237,6 +250,7 @@ class ABlasterCharacter : ACharacter
             FRotator DeltaAimRotation = (CurrentAimRotation - StartingAimRotation).Normalized;
             AO_Yaw = DeltaAimRotation.Yaw;
             bUseControllerRotationYaw = false; // 禁用控制器偏航旋转
+            TurnInPlace(DeltaTime);
         }
 
         /**
@@ -251,6 +265,7 @@ class ABlasterCharacter : ACharacter
             StartingAimRotation = FRotator(0.0, GetBaseAimRotation().Yaw, 0.0);
             AO_Yaw = 0.0;
             bUseControllerRotationYaw = true; // 启用控制器偏航旋转
+            TurningInPlace = ETurningInPlace::ETIP_NotTurning;
         }
         CaculateAO_Pitch();
     }
@@ -337,5 +352,10 @@ class ABlasterCharacter : ACharacter
     bool IsAiming()
     {
         return (IsValid(Combat) && Combat.bAiming);
+    }
+
+    ETurningInPlace GetTurningInPlace() const
+    {
+        return TurningInPlace;
     }
 };

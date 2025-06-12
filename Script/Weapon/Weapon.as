@@ -1,12 +1,3 @@
-
-enum EWeaponState
-{
-    EWT_Initial,
-    EWT_Equipped,
-    EWT_Dropped,
-    EWT_MAX
-}
-
 class AWeapon : AActor
 {
     default bReplicates = true; // 启用网络同步，使该类的实例可以在网络上进行同步和更新。
