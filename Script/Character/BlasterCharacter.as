@@ -75,7 +75,7 @@ class ABlasterCharacter : ACharacter
     default CharacterMovement.GravityScale = 3.0;
     default CharacterMovement.MaxWalkSpeedCrouched = 350.0;
 
-    private float AO_Yaw;   // 用于存储 Aiming Offset 的 Yaw 角度，用于控制角色的瞄准偏移
+    private float AO_Yaw; // 用于存储 Aiming Offset 的 Yaw 角度，用于控制角色的瞄准偏移
     private float AO_Pitch; // 用于存储 Aiming Offset 的 Pitch 角度，用于控制角色的瞄准偏移
 
     UFUNCTION(BlueprintOverride)
@@ -215,20 +215,19 @@ class ABlasterCharacter : ACharacter
 
     FRotator StartingAimRotation; // 用于存储初始瞄准旋转
 
+    float CalculateSpeed()
+    {
+        FVector CurrentVelocity = GetVelocity();
+        CurrentVelocity.Z = 0.0;
+        return CurrentVelocity.Size();
+    }
+
     protected void AimOffset(float DeltaTime)
     {
-        if (!IsValid(Combat) || !IsValid(Combat.EquippedWeapon))
-        {
-            AO_Yaw = 0.0;
-            AO_Pitch = 0.0;
+        if (Combat != nullptr && Combat.EquippedWeapon == nullptr)
             return;
-        }
 
-        FVector Velocity = GetVelocity();
-        // 将速度向量的 Z 分量置为 0，忽略垂直方向的速度
-        Velocity.Z = 0.0;
-        // 计算水平方向的速度大小
-        float Speed = Velocity.Size();
+        float Speed = CalculateSpeed();
         bool  bIsInAir = CharacterMovement.IsFalling();
 
         if (Speed == 0.0 && !bIsInAir)
@@ -264,7 +263,7 @@ class ABlasterCharacter : ACharacter
          * 这样可以确保网络同步时远程角色的俯仰角不会出现异常（因为Pitch角度会环绕）。
          */
         AO_Pitch = GetBaseAimRotation().Pitch;
-        if(AO_Pitch > 90.0 && !IsLocallyControlled())
+        if (AO_Pitch > 90.0 && !IsLocallyControlled())
         {
             FVector2D InRange(270.0, 360.0);
             FVector2D OutRange(-90.0, 0.0);
@@ -272,12 +271,12 @@ class ABlasterCharacter : ACharacter
         }
     }
 
-    float GetAOYaw()
+    float GetAOYaw() const
     {
         return AO_Yaw;
     }
 
-    float GetAOPitch()
+    float GetAOPitch() const
     {
         return AO_Pitch;
     }
